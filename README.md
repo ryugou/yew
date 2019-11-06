@@ -20,20 +20,20 @@
   <h4>
     <a href="#running-the-examples">Examples</a>
     <span> | </span>
-    <a href="https://github.com/yewstack/yew/blob/master/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/ryugou/yew/blob/master/CHANGELOG.md">Changelog</a>
     <span> | </span>
-    <a href="https://github.com/yewstack/yew/blob/master/CODE_OF_CONDUCT.md">Code of Conduct</a>
+    <a href="https://github.com/ryugou/yew/blob/master/CODE_OF_CONDUCT.md">Code of Conduct</a>
   </h4>
 </div>
 
-## Overview
+## 概要
 
-**Yew** is a modern Rust framework inspired by Elm and React for
-creating multi-threaded frontend apps with WebAssembly.
+**Yew**は Elm と React に触発された最新の Rustフレームワークです。
+WebAssembly を使用してマルチスレッドフロントエンドアプリを作成します。
 
-The framework supports ***multi-threading & concurrency*** out of the box.
-It uses [Web Workers API] to spawn actors (agents) in separate threads
-and uses a local scheduler attached to a thread for concurrent tasks.
+フレームワークは***マルチスレッドと同時実行***をすぐに使えるようサポートします。
+[Web Workers API]を使用して、別々のスレッドでアクター（エージェント）を生成します。
+また、並行タスクのスレッドに接続されたローカルスケジューラを使用します。
 
 [Web Workers API]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
 
@@ -41,17 +41,16 @@ and uses a local scheduler attached to a thread for concurrent tasks.
 
 [Check out a live demo](https://yew-todomvc.netlify.com/) powered by [`yew-wasm-pack-template`](https://github.com/yewstack/yew-wasm-pack-template)
 
-## Cutting Edge technologies
+## 最先端のテクノロジー
 
 ### Rust to WASM compilation
 
-This framework is designed to be compiled into modern browsers' runtimes: wasm, asm.js, emscripten.
+このフレームワークは、最新のブラウザーのランタイム（wasm、asm.js、emscripten）にコンパイルされるように設計されています。
+開発環境を準備するには、次のインストール手順を使用してください([wasm-and-rust](https://github.com/raphamorim/wasm-and-rust))。
 
-To prepare the development environment use the installation instruction here: [wasm-and-rust](https://github.com/raphamorim/wasm-and-rust).
+### ElmとReduxに触発されたアーキテクチャ
 
-### Architecture inspired by Elm and Redux
-
-Yew implements strict application state management based on message passing and updates:
+Yewはメッセージの受け渡しと更新に基づいて、厳密なアプリケーション状態管理を実装しています。
 
 `src/main.rs`
 
@@ -65,7 +64,7 @@ enum Msg {
 }
 
 impl Component for Model {
-    // Some details omitted. Explore the examples to see more.
+    // 一部の詳細は省略されています。詳細を確認するには examples をご覧ください。
 
     type Message = Msg;
     type Properties = ();
@@ -77,7 +76,7 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::DoIt => {
-                // Update your model on events
+                // イベントでModelを更新する
                 true
             }
         }
@@ -85,7 +84,7 @@ impl Component for Model {
 
     fn view(&self) -> Html<Self> {
         html! {
-            // Render your model here
+            // ここでModelをレンダリングします
             <button onclick=|_| Msg::DoIt>{ "Click me!" }</button>
         }
     }
@@ -96,12 +95,12 @@ fn main() {
 }
 ```
 
-Predictable mutability and lifetimes (thanks Rust!) make it possible to reuse a single instance of the model
-without a need to create a fresh one on every update. It also helps to reduce memory allocations.
+予測可能な可変性とライフタイムにより、更新のたびに新しいインスタンスを作成することなく、モデルの単一インスタンスを再利用できます。また、メモリ割り当ての削減にも役立ちます。
 
-### JSX-like templates with `html!` macro
 
-Feel free to put pure Rust code into HTML tags with all the compiler and borrow checker's benefits.
+### `html!`マクロを使用したJSXライクなテンプレート
+
+すべてのコンパイラを使用して純粋なRustコードをHTMLタグに入れて、チェッカーの利点を借りてください。
 
 ```rust
 html! {
@@ -121,11 +120,11 @@ html! {
 }
 ```
 
-### Agents - actor model inspired by Erlang and Actix
+### エージェント-ErlangとActixに触発されたアクタModel
 
-Every `Component` can spawn an agent and attach to it.
-Agents can coordinate global state, spawn long-running tasks, and offload tasks to a web worker.
-They run independently of components, but hook nicely into their update mechanism.
+すべての「コンポーネント」はエージェントを生成し、それに接続できます。
+エージェントは、グローバル状態を調整し、長時間実行されるタスクを生成し、タスクをWebワーカーにオフロードできます。
+コンポーネントとは独立して実行されますが、更新メカニズムにうまくフックします。
 
 ```rust
 use yew::worker::*;
@@ -146,24 +145,25 @@ pub enum Response {
 
 impl Agent for Worker {
     // Available:
-    // - `Job` (one per bridge on the main thread)
-    // - `Context` (shared in the main thread)
-    // - `Private` (one per bridge in a separate thread)
-    // - `Public` (shared in a separate thread)
-    type Reach = Context; // Spawn only one instance on the main thread (all components can share this agent)
+    // - `Job` (メインスレッドのブリッジごとに1つ)
+    // - `Context` (メインスレッドで共有)
+    // - `Private` (別のスレッドのブリッジごとに1つ)
+    // - `Public` (別のスレッドで共有)
+    type Reach = Context; // メインスレッドでインスタンスを1つだけ生成します（すべてのコンポーネントがこのエージェントを共有できます）
     type Message = Msg;
     type Input = Request;
     type Output = Response;
 
-    // Create an instance with a link to agent's environment.
+    // エージェントの環境へのリンクを持つインスタンスを作成します。
     fn create(link: AgentLink<Self>) -> Self {
         Worker { link }
     }
 
-    // Handle inner messages (of services of `send_back` callbacks)
+    // (`send_back`コールバックのサービスの）内部メッセージを処理する
+
     fn update(&mut self, msg: Self::Message) { /* ... */ }
 
-    // Handle incoming messages from components of other agents.
+    // 他のエージェントのコンポーネントからの着信メッセージを処理します。
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
             Request::Question(_) => {
@@ -174,8 +174,8 @@ impl Agent for Worker {
 }
 ```
 
-Build the bridge to an instance of this agent.
-It spawns a worker automatically or reuses an existing one, depending on the type of the agent:
+このエージェントのインスタンスへのブリッジを構築します。
+エージェントのタイプに応じて、ワーカーを自動的に生成するか、既存のワーカーを再利用します。
 
 ```rust
 struct Model {
@@ -192,24 +192,20 @@ impl Component for Model {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(|_| Msg::ContextMsg);
-        // `Worker::bridge` spawns an instance if no one is available
-        let context = context::Worker::bridge(callback); // Connected! :tada:
+        // `Worker::bridge`は、誰も利用できない場合にインスタンスを生成します
+        let context = context::Worker::bridge(callback); // 接続済み! :tada:
         Model { context }
     }
 }
 ```
 
-You can use as many agents as you want. For example you could separate all interactions
-with a server to a separate thread (a real OS thread because Web Workers map to the native threads).
+必要な数のエージェントを使用できます。たとえば、サーバーとのすべての対話を個別のスレッド（Webワーカーがネイティブスレッドにマップするため、実際のOSスレッド）に分離できます。
 
-> **REMEMBER!** Not every API is available for every environment. For example you can't use
-`StorageService` from a separate thread. It won't work with `Public` or `Private` agents,
-only with `Job` and `Context` ones.
+> **REMEMBER**すべてのAPIがすべての環境で利用できるわけではありません。たとえば、別のスレッドから`StorageService`を使用することはできません。`Public`または`Private`エージェントでは動作せず、`Job`および`Context`エージェントでのみ動作します。
 
-### Components
+### コンポーネント
 
-Yew supports components! You could create a new one by implementing a `Component` trait
-and including it directly into the `html!` template:
+Yewはコンポーネントをサポートしています。`Component`トレイトを実装し、それを`html!`テンプレートに直接含めることで、新しいものを作成できます。
 
 ```rust
 html! {
@@ -223,12 +219,11 @@ html! {
 }
 ```
 
-### Scopes
+### スコープ
 
-Components live in an Angular-like scopes with **parent-to-child** *(properties)* and
-**child-to-parent** *(events)* interaction.
+コンポーネントは、**parent-to-child** *(properties)*および**child-to-parent** *(events)*の相互作用を持つ、Angularのようなスコープに存在します。
 
-Properties are also pure Rust types with strict type-checking during the compilation.
+プロパティは、コンパイル中に厳密な型チェックを行う純粋なRust型でもあります。
 
 ```rust
 // my_button.rs
@@ -255,9 +250,9 @@ html! {
 }
 ```
 
-### Fragments
+### フラグメント
 
-Yew supports fragments: elements without a parent which can be attached to one somewhere else.
+Yewはフラグメントをサポートします。親のない要素はどこかに接続できます。
 
 ```rust
 html! {
@@ -269,14 +264,11 @@ html! {
 }
 ```
 
-### Virtual DOM, independent loops, fine updates
+### Virtual DOM、独立ループ、細かい更新
 
-Yew uses its own **virtual-dom** implementation. It updates the browser's DOM
-with tiny patches when properties of elements have changed. Every component lives
-in its own independent loop interacting with the environment (`Scope`) through message passing
-and supports a fine control of rendering.
+Yewは独自の**virtual-dom**実装を使用します。 要素のプロパティが変更されると、小さなパッチでブラウザのDOMを更新します。 すべてのコンポーネントは、メッセージの受け渡しを通じて環境(`Scope`)と対話する独自の独立したループ内に存在し、レンダリングの微調整をサポートします。
 
-The `ShouldRender` returns the value which informs the loop when the component should be re-rendered:
+`ShouldRender`は、コンポーネントをいつ再レンダリングする必要があるかをループに通知する値を返します。
 
 ```rust
 fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -292,12 +284,11 @@ fn update(&mut self, msg: Self::Message) -> ShouldRender {
 }
 ```
 
-Using `ShouldRender` is more effective than comparing the model after every update because not every change to the model
-causes an update to the view. It allows the framework to only compare parts of the model essential to rendering the view.
+モデルへのすべての変更がビューの更新を引き起こすわけではないため、更新のたびにモデルを比較するよりも`ShouldRender`を使用する方が効果的です。フレームワークは、ビューのレンダリングに不可欠なモデルの一部のみを比較できます。
 
-### Rust/JS/C-style comments in templates
+### テンプレート内のRust/JS/Cスタイルのコメント
 
-Use single-line or multi-line Rust comments inside html-templates.
+htmlテンプレート内で単一行または複数行のRustコメントを使用します。
 
 ```rust
 html! {
@@ -311,9 +302,9 @@ html! {
 }
 ```
 
-### Third-party crates and pure Rust expressions inside
+### サードパーティのcratesと内部の純粋なRust式
 
-Use external crates and put values from them into the template:
+外部クレートを使用し、それらからテンプレートに値を入力します。
 
 ```rust
 extern crate chrono;
@@ -328,15 +319,14 @@ impl Renderable<Model> for Model {
 }
 ```
 
-> Some crates don't support the true wasm target (`wasm32-unknown-unknown`) yet.
+> いくつかのクレートは、真のwasmターゲット(`wasm32-unknown-unknown`)をまだサポートしていません。
 
-### Services
+### サービス
 
-Yew has implemented pluggable services that allow you to call external APIs, such as:
-JavaScript alerts, timeout, storage, fetches and websockets.
-It's a handy alternative to subscriptions.
+YewはJavaScriptアラート、タイムアウト、ストレージ、フェッチ、Webソケットなどの外部APIを呼び出すことができるプラグ可能なサービスを実装しています。
+サブスクリプションに代わる便利な代替手段です。
 
-Implemented:
+実装済み
 * `IntervalService`
 * `RenderService`
 * `ResizeService`
@@ -372,10 +362,8 @@ impl Component for Model {
 }
 ```
 
-Can't find an essential service? Want to use a library from `npm`?
-You can wrap `JavaScript` libraries using `stdweb` and create
-your own service implementation. Here's an example below of how to wrap the
-[ccxt](https://www.npmjs.com/package/ccxt) library:
+不可欠なサービスが見つかりませんか？`npm`のライブラリを使用したいですか？
+`stdweb`を使用して`JavaScript`ライブラリをラップし、独自のサービス実装を作成できます。 以下は`ccxt`(https://www.npmjs.com/package/ccxt)ライブラリをラップする方法の例です。
 
 ```rust
 pub struct CcxtService(Option<Value>);
@@ -399,17 +387,16 @@ impl CcxtService {
         v
     }
 
-    // Wrap more methods here!
+    //ここに他のメソッドをラップします！
 }
 ```
 
-### Easy-to-use data conversion and destructuring
+### 使いやすいデータ変換および構造化
+Yewではシリアル化（保存/送信および復元/受信）形式が可能です。
 
-Yew allows for serialization (store/send and restore/receive) formats.
+実装済み: `JSON`, `TOML`, `YAML`, `MSGPACK`, `CBOR`.
 
-Implemented: `JSON`, `TOML`, `YAML`, `MSGPACK`, `CBOR`.
-
-In development: `BSON`, `XML`.
+開発中: `BSON`, `XML`.
 
 ```rust
 use yew::format::Json;
@@ -428,11 +415,11 @@ struct Model {
 impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         Msg::Store => {
-            // Stores it, but in JSON format/layout
+            // JSONで保存します
             self.local_storage.store(KEY, Json(&model.clients));
         }
         Msg::Restore => {
-            // Tries to read and destructure it as JSON formatted data
+            // JSON形式のデータとして読み取りおよび構造化を試みます
             if let Json(Ok(clients)) = self.local_storage.restore(KEY) {
                 model.clients = clients;
             }
@@ -441,29 +428,28 @@ impl Component for Model {
 }
 ```
 
-Only `JSON` is available by default but you can activate the rest through features in
-your project's `Cargo.toml`:
+デフォルトでは`JSON`のみが使用可能ですが、プロジェクトの`Cargo.toml`の機能を使用して残りをアクティブにできます。
 
 ```toml
 [dependencies]
 yew = { git = "https://github.com/yewstack/yew", features = ["toml", "yaml", "msgpack", "cbor"] }
 ```
 
-## Development setup
+## 開発セットアップ
 
-Clone or download this repository.
+このリポジトリをCloneまたはダウンロードします。
 
-### Install [cargo-web]
+### [cargo-web]のインストール 
 
-This is an optional tool that simplifies deploying web applications:
+これは、Webアプリケーションの展開を簡素化するオプションツールです。
 
 ```bash
 cargo install cargo-web
 ```
 
-> Add `--force` option to ensure you install the latest version.
+> `--force`オプションを追加して、最新バージョンを確実にインストールしてください。
 
-### Build
+### ビルド
 
 ```bash
 cargo web build
@@ -472,33 +458,32 @@ cargo web build
 cargo build --target wasm32-unknown-unknown
 ```
 
-### Running Tests
+### テストの実行
 
 ```bash
 ./ci/run_tests.sh
 ```
 
-### Running the examples
+### サンプルを実行する
 
-There are many examples that show how the framework works:
+フレームワークの仕組みを示す多くの例があります。
 [counter], [crm], [custom_components], [dashboard], [fragments],
 [game_of_life], [mount_point], [npm_and_rest], [timer], [todomvc], [two_apps].
 
-To start an example enter its directory and start it with [cargo-web]:
+サンプルを開始するには、ディレクトリを入力し、[cargo-web]で開始します。
 
 ```bash
 cargo web start
 ```
 
-To run an optimised build instead of a debug build use:
+デバッグビルドの代わりに最適化ビルドを実行するには次のようにします。
 
 ```bash
 cargo web start --release
 ```
 
-This will use the `wasm32-unknown-unknown` target by default, which is Rust's native WebAssembly target.
-The Emscripten-based `wasm32-unknown-emscripten` and `asmjs-unknown-emscripten` targets are also supported
-if you tell the `cargo-web` to build for them using the `--target` parameter.
+これはデフォルトで`wasm32-unknown-unknown`ターゲットを使用します。これはRustのネイティブWebAssemblyターゲットです。
+Emscriptenベースの`wasm32-unknown-emscripten`および`asmjs-unknown-emscripten`ターゲットは、`--target`パラメーターを使用してビルドするように`cargo-web`に指示した場合にもサポートされます。
 
 [counter]: examples/counter
 [crm]: examples/crm
@@ -514,7 +499,7 @@ if you tell the `cargo-web` to build for them using the `--target` parameter.
 [cargo-web]: https://github.com/koute/cargo-web
 
 
-## Project templates
+## プロジェクトテンプレート
 
-* [`yew-wasm-pack-template`](https://github.com/yewstack/yew-wasm-pack-template)
-* [`yew-wasm-pack-minimal`](https://github.com/yewstack/yew-wasm-pack-minimal)
+* [`yew-wasm-pack-template`](https://github.com/ryugou/yew-wasm-pack-template)
+* [`yew-wasm-pack-minimal`](https://github.com/ryugou/yew-wasm-pack-minimal)
